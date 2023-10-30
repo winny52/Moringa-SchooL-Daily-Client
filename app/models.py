@@ -36,6 +36,8 @@ class Content(db.Model):
     is_flagged = db.Column(db.String)
     image_thumbnail = db.Column(db.String(255))
     video_url = db.Column(db.String(255))# sijui ka we will need this but unaezalenga
+    status = db.Column(db.String)
+
 
     # Define relationships between Content, Category, and User models
     category = db.relationship('Category', backref='contents')
