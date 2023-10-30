@@ -1,6 +1,7 @@
 # Import the necessary modules
 from app import db
 from datetime import datetime  # Import the datetime module
+
 # Define the User model
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -33,6 +34,8 @@ class Content(db.Model):
     rating = db.Column(db.String)
     time_posted = db.Column(db.DateTime, default=datetime.utcnow)  # Set the default to the current time
     is_flagged = db.Column(db.String)
+    image_thumbnail = db.Column(db.String(255))
+    video_url = db.Column(db.String(255))# sijui ka we will need this but unaezalenga
 
     # Define relationships between Content, Category, and User models
     category = db.relationship('Category', backref='contents')
