@@ -1,77 +1,97 @@
-#!/usr/bin/env python
+# Import necessary libraries and modules
+from flask import Flask, render_template
+from flask.sessions import Session
+from flask import request, jsonify
+from flask_restful import Resource
+from models import User
+from werkzeug.security import check_password_hash,generate_password_hash
+from flask_jwt_extended import JWTManager
 
-from flask import Flask, jsonify, request,make_response, redirect, url_for
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 
-from models import db, Users
-
+# Create a Flask application
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///earth.sqlite3'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-app.json.compact = False
+# Initialize Flask-RESTful
+api = Api(app)
 
-migrate = Migrate(app, db)
+
+# Configure Flask-Session
+app.config['SESSION_TYPE'] = 'filesystem'  # You can choose other options
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_USE_SIGNER'] = True
+
+# Initialize Flask-Session
+Session(app)
+
+# Configure Flask-JWT-Extended
+app.config['JWT_SECRET_KEY'] = 'your_secret_key'
+jwt = JWTManager(app) 
+
+# Initialize SQLAlchemy (assuming you are using SQLAlchemy for the database)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'your_database_uri'  # Replace with your actual database URI
+db = SQLAlchemy(app)
 db.init_app(app)
 
-def seed():
-    User1 = Users(
-        username = 'testone', 
-        password = 'admin',
-    )
+# Define routes and views
+class Signup(Resource):
+    def post(self):
+        data = request.json  # Assumes you are sending JSON data in the request body
 
-    db.session.add(User1)
-    db.session.commit()
+        username = data.get('username')
+        password = data.get('password')
+        role = data.get('role')
 
-@app.route('/')
-def index():
-    return 'this is index' 
+        if not username or not password or not role:
+            return jsonify({'error': 'Username, password, and role are required'}), 400
 
-@app.route('/success/<name>')
-def success(name):
-   return 'welcome %s' % name
+        # Check if the specified role is valid (admin, user, or writer)
+        if role not in ['admin', 'user', 'writer']:
+            return jsonify({'error': 'Invalid role specified'}), 400
+        
+         # Hash the password before storing it
+        hashed_password = generate_password_hash(password)
 
-@app.route('/fail')
-def fail():
-   return 'wrong password and username'
+        # Store the hashed password in the database
+        user = User(username=username, password_hash=hashed_password, role=role)
+        db.session.add(user)
+        db.session.commit()
 
-
-
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'GET':
-        return 'register now'
-
-    elif request.method == 'POST':
-        newUser = Users(
-                username=request.form.get("username"), 
-                password=request.form.get("password"), 
-        )
-
-    db.session.add(newUser)        
-    db.session.commit()
-    
-    return "202"
+        return jsonify({'message': 'User registered successfully'}), 201
 
 
-@app.route('/login',methods = ['POST', 'GET'])
-def login():
-   if request.method == 'POST':
-      user = request.form['username']
-      user_pass = request.form['password']
+class Login(Resource):
+     def post(self):
+        data = request.json  # Assumes you are sending JSON data in the request body
 
-      db_user = db.session.execute(db.select(Users).filter_by(id=user)).scalar_one()
+        username = data.get('username')
+        password = data.get('password')
 
-      if(db_user.password == user_pass):
-        return redirect(url_for('success', name=db_user.username))
-      
-      else:
-          return redirect(url_for('fail'))
+        if not username or not password:
+            return jsonify({'error': 'Username and password are required'}), 400
 
-   else:
-      return "This is login page" 
+        # Find the user by username in the database
+        user = User.query.filter_by(username=username).first()
+
+        if not user:
+            return jsonify({'error': 'Invalid username or password'}), 401
+
+        # Check if the provided password matches the stored password hash
+        if not check_password_hash(user.password_hash, password):
+            return jsonify({'error': 'Invalid username or password'}), 401
+
+        return jsonify({'message': 'Login successful', 'user_id': user.user_id}), 200
+        # Generate a JWT token for the user
+        access_token = create_access_token(identity=user.user_id)
+
+        # Return the token as part of the response
+        return jsonify({'message': 'Login successful', 'access_token': access_token}), 200
+
+# Add routes 
+api.add_resource(Signup, '/signup')
+api.add_resource(Login, '/login')
+
+
+
 if __name__ == '__main__':
-    app.run(port=5555, debug=True)
+    app.run(debug=True)
