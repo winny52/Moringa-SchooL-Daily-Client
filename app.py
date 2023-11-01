@@ -1,13 +1,18 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from models import Category,Comment,Content,User,db
+from flask_migrate import Migrate
+
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moringa.db'  # Use SQLite for development
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moringa.db'  
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
-db = SQLAlchemy()
+migrate = Migrate(app, db)
+
+
 db.init_app(app) 
 
+#main api endpoint
 @app.route('/', methods=['GET'])
 def get_data():
     data = {
@@ -16,11 +21,38 @@ def get_data():
     }
     return jsonify(data)
 
+# Endpoint to get a list of signed-up users as JSON
+@app.route('/users', methods=['GET'])
+def user_list():
+    users = User.query.all()
+    user_list = [{'id': user.id, 'username': user.username, 'email': user.email, 'role': user.role} for user in users]
+    return jsonify(user_list)
+
+
+# Admin route for creating a category
+@app.route('/admin/create-category', methods=['POST'])
+#add decorator
+def create_category():
+    data = request.get_json()
+    name = data.get('name')
+    description = data.get('description')
+    category = Category(name=name, description=description)
+    db.session.add(category)
+    db.session.commit()
+    return jsonify({"message": "Category created successfully"})
+
+# Route for viewing categories (accessible to techwriters and users)
+@app.route('/view-categories', methods=['GET'])
+def view_categories():
+    categories = Category.query.all()
+    category_list = [{"category_id": category.category_id, "name": category.name, "description": category.description} for category in categories]
+    return jsonify(category_list)
+
 # Endpoint to add content and retrieve content
 @app.route('/api/content', methods=['GET', 'POST'])
 def content():
     if request.method == 'POST':
-        # Retrieve all fields from the JSON request
+        
         title = request.json['title']
         description = request.json['description']
         category_id = request.json['category_id']
@@ -32,7 +64,7 @@ def content():
         video_url = request.json['video_url']
         status = request.json['status']
 
-        # Create a new content object with all fields
+    
         new_content = Content(
             title=title,
             description=description,
@@ -84,34 +116,110 @@ def content():
             })
 
         return jsonify(content_data), 200
+    
+#End point to update specific content
+@app.route('/content/<int:id>', methods=['PUT'])
+def update_content(id):
+    content = Content.query.get(id)
+    if content is None:
+        return jsonify({'message': 'Content not found'}), 404
 
-
-# Endpoint to get a list of signed-up users as JSON
-@app.route('/users', methods=['GET'])
-def user_list():
-    users = User.query.all()
-    user_list = [{'id': user.id, 'username': user.username, 'email': user.email, 'role': user.role} for user in users]
-    return jsonify(user_list)
-
-
-# Admin route for creating a category
-@app.route('/admin/create-category', methods=['POST'])
-#add decorator
-def create_category():
     data = request.get_json()
-    name = data.get('name')
-    description = data.get('description')
-    category = Category(name=name, description=description)
-    db.session.add(category)
-    db.session.commit()
-    return jsonify({"message": "Category created successfully"})
 
-# Route for viewing categories (accessible to techwriters and users)
-@app.route('/view-categories', methods=['GET'])
-def view_categories():
-    categories = Category.query.all()
-    category_list = [{"category_id": category.category_id, "name": category.name, "description": category.description} for category in categories]
-    return jsonify(category_list)
+    content.title = data.get('title', content.title)
+    content.description = data.get('description', content.description)
+    content.content_type = data.get('content_type', content.content_type)
+    content.rating = data.get('rating', content.rating)
+    content.is_flagged = data.get('is_flagged', content.is_flagged)
+    content.image_thumbnail = data.get('image_thumbnail', content.image_thumbnail)
+    content.video_url = data.get('video_url', content.video_url)
+    content.status = data.get('status', content.status)
+
+    db.session.commit()
+
+    updated_content = {
+        "content_id": content.content_id,
+        "title": content.title,
+        "description": content.description,
+        "category_id": content.category_id,
+        "user_id": content.user_id,
+        "content_type": content.content_type,
+        "rating": content.rating,
+        "is_flagged": content.is_flagged,
+        "image_thumbnail": content.image_thumbnail,
+        "video_url": content.video_url,
+        "status": content.status
+    }
+
+    return jsonify({'message': 'Content updated successfully', 'content': updated_content})
+
+#End point to delete content by id 
+@app.route('/content/<int:id>', methods=['DELETE'])
+def delete_content(id):
+    content = Content.query.get(id)
+    if content is None:
+        return jsonify({'message': 'Content not found'}), 404
+
+    db.session.delete(content)
+    db.session.commit()
+
+    return jsonify({'message': 'Content deleted successfully'})
+
+
+#Endpoint to add comment for specific content item
+@app.route('/content/<int:content_id>/comments', methods=['GET', 'POST'])
+def get_or_create_comments(content_id):
+    if request.method == 'GET':
+        
+        content = Content.query.get(content_id)
+        if content is None:
+            return jsonify({'message': 'Content not found'}), 404
+
+        comments = Comment.query.filter_by(content_id=content_id).all()
+        comment_list = []
+
+        for comment in comments:
+            comment_list.append({
+                'comment_id': comment.comment_id,
+                'text': comment.text,
+                'user_id': comment.user_id,  
+                
+            })
+
+        return jsonify(comment_list)
+    
+    elif request.method == 'POST':
+        
+        content = Content.query.get(content_id)
+        if content is None:
+            return jsonify({'message': 'Content not found'}), 404
+
+        data = request.get_json()
+
+        new_comment = Comment(
+            content_id=content_id,
+            user_id=data['user_id'],  
+            text=data['text']
+            
+        )
+
+        db.session.add(new_comment)
+        db.session.commit()
+
+        return jsonify({'message': 'Comment added successfully'})
+    
+#Endpoint for deleting a comment 
+@app.route('/comments/<int:id>', methods=['DELETE'])
+def delete_comment(id):
+    comment = Comment.query.get(id)
+    if comment is None:
+        return jsonify({'message': 'Comment not found'}), 404
+
+    db.session.delete(comment)
+    db.session.commit()
+
+    return jsonify({'message': 'Comment deleted successfully'})
+
 
 
 
