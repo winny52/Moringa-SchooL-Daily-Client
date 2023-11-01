@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
-#from flask_sqlalchemy import SQLAlchemy
-from models import Category,Comment,Content,User,db
+from flask_sqlalchemy import SQLAlchemy
+# from models import Category,Comment,Content,User,db
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moringa.db'  # Use SQLite for development
