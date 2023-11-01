@@ -7,11 +7,13 @@ name = "pypi"
 pytest = "*"
 flask = "*"
 gunicorn = "*"
-flask-migrate = "*"
+sqlalchemy = "*"
 flask-sqlalchemy = "*"
+flask-migrate = "*"
+sqlalchemy-serializer = "*"
 
 [dev-packages]
 
 [requires]
 python_version = "3.8"
-python_full_version = "3.8.10"
+python_full_version = "3.8.13"
