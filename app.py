@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify,make_response
 from flask_sqlalchemy import SQLAlchemy
 from models import Category,Comment,Content,User,db
 from flask_migrate import Migrate
@@ -24,9 +24,8 @@ def get_data():
 # Endpoint to get a list of signed-up users as JSON
 @app.route('/users', methods=['GET'])
 def user_list():
-    users = User.query.all()
-    user_list = [{'id': user.id, 'username': user.username, 'email': user.email, 'role': user.role} for user in users]
-    return jsonify(user_list)
+    users = [user.to_dict() for user in User.query.all()]
+    return make_response(jsonify(users), 200)
 
 
 # Admin route for creating a category

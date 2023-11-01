@@ -1,9 +1,13 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime  # Import the datetime module
+from sqlalchemy_serializer import SerializerMixin
 db = SQLAlchemy()
 
 # Define the User model
-class User(db.Model):
+class User(db.Model, SerializerMixin):
+
+    serialize_only = ("id", "username", "email", "password", "role")
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(255))
     email = db.Column(db.String(255))
@@ -18,13 +22,13 @@ class User(db.Model):
         self.role = role
 
 # Define the Category model
-class Category(db.Model):
+class Category(db.Model, SerializerMixin):
     category_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255))
     description = db.Column(db.String(255))
 
 # Define the Content model
-class Content(db.Model):
+class Content(db.Model, SerializerMixin):
     content_id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255))
     description = db.Column(db.Text)
@@ -44,7 +48,7 @@ class Content(db.Model):
     user = db.relationship('User', backref='contents')
 
 # Define the Comment model
-class Comment(db.Model):
+class Comment(db.Model, SerializerMixin):
     comment_id = db.Column(db.Integer, primary_key=True)
     content_id = db.Column(db.Integer, db.ForeignKey('content.content_id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -55,7 +59,7 @@ class Comment(db.Model):
     user = db.relationship('User', backref='comments')
 
 # Define the Subscription model
-class Subscription(db.Model):
+class Subscription(db.Model, SerializerMixin):
     subscription_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     category_id = db.Column(db.Integer, db.ForeignKey('category.category_id'))
@@ -65,7 +69,7 @@ class Subscription(db.Model):
     category = db.relationship('Category', backref='subscribers')
 
 # Define the Wishlist model
-class Wishlist(db.Model):
+class Wishlist(db.Model, SerializerMixin):
     wishlist_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     content_id = db.Column(db.Integer, db.ForeignKey('content.content_id'))
