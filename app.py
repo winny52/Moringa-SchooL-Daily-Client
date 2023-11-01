@@ -9,7 +9,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moringa.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
 migrate = Migrate(app, db)
 
-
 db.init_app(app) 
 
 #main api endpoint
