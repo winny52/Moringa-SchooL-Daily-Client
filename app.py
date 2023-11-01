@@ -9,7 +9,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moringa.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
 migrate = Migrate(app, db)
 
-
 db.init_app(app) 
 
 #main api endpoint
@@ -116,7 +115,7 @@ def content():
 
         return jsonify(content_data), 200
     
-#End point to update specific content
+#End point to update specific contents
 @app.route('/content/<int:id>', methods=['PUT'])
 def update_content(id):
     content = Content.query.get(id)
@@ -152,7 +151,7 @@ def update_content(id):
 
     return jsonify({'message': 'Content updated successfully', 'content': updated_content})
 
-#End point to delete content by id 
+#End point to delete content by ids 
 @app.route('/content/<int:id>', methods=['DELETE'])
 def delete_content(id):
     content = Content.query.get(id)

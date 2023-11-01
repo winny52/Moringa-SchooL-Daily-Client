@@ -23,7 +23,9 @@ class TestApp:
       assert 'email' in data[0]
    
    def test_get_category_route (self):
-      '''Test the route to get category'''
+      '''Test tI am hoping we can find an alternative date and time that works for both of us to ensure that we can have a productive and meaningful discussion. Please let me know your availability, and I will do my best to accommodate your schedule.
+
+he route to get category'''
       response =app.test_client().get('/view-categories')
       assert response.status_code== 200
       data.json.loads(response.data.decode)
