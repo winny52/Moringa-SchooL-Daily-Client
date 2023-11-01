@@ -14,6 +14,7 @@ class User(db.Model, SerializerMixin):
     password = db.Column(db.String(255))
     role = db.Column(db.String(50))  # User's role (Admin, Reader, Writer)
 
+    wishlists = db.relationship('Wishlist', back_populates='user')
     # Constructor for User model
     def __init__(self, username, email, password, role):
         self.username = username
@@ -46,7 +47,7 @@ class Content(db.Model, SerializerMixin):
     # Define relationships between Content, Category, and User models
     category = db.relationship('Category', backref='contents')
     user = db.relationship('User', backref='contents')
-
+    wishlists = db.relationship('Wishlist', back_populates='content')
 # Define the Comment model
 class Comment(db.Model, SerializerMixin):
     comment_id = db.Column(db.Integer, primary_key=True)
@@ -75,5 +76,5 @@ class Wishlist(db.Model, SerializerMixin):
     content_id = db.Column(db.Integer, db.ForeignKey('content.content_id'))
 
     # Define relationships between Wishlist, User, and Content models
-    user = db.relationship('User', backref='wishlists')
+    user = db.relationship('User', back_populates='wishlists')
     content = db.relationship('Content', backref='wished_by')

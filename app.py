@@ -1,7 +1,10 @@
-from flask import Flask, request, jsonify,make_response
+from flask import Flask, request, jsonify,make_response,session,render_template
+from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
-from models import Category,Comment,Content,User,db
+from models import Category,Comment,Content,User,db,Wishlist
 from flask_migrate import Migrate
+from werkzeug.security import check_password_hash, generate_password_hash
+from flask_jwt_extended import JWTManager,get_jwt_identity
 
 
 app = Flask(__name__)
@@ -9,8 +12,74 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moringa.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
 migrate = Migrate(app, db)
 
-db.init_app(app) 
+Session(app)
+jwt = JWTManager(app) 
 
+db.init_app(app)
+
+def clean():
+   user = db.session.execute(db.select(User).filter_by(id=3)).scalar_one()
+   db.session.delete(user)
+   db.session.commit()
+
+# @app.route('/', methods=['GET'])
+# def index():
+#     return 'cleaned'
+
+@app.route("/signup", methods=["POST"])
+def signup():
+    data = request.json  # Assumes you are sending JSON data in the request body
+
+    username = data.get('username')
+    password = data.get('password')
+    role = data.get('role')
+
+    if not username or not password or not role:
+        return make_response(({'error': 'Username, password, and role are required'}), 400)
+
+    # Check if the specified role is valid (admin, user, or writer)
+    if role not in ['admin', 'user', 'writer']:
+        return jsonify({'error': 'Invalid role specified'}), 400
+    
+     # Hash the password before storing it
+    hashed_password = generate_password_hash(password)
+
+    # Store the hashed password in the database
+    user = User(username=username, password=hashed_password, role=role)
+
+    db.session.add(user)
+    db.session.commit()
+
+    return make_response(jsonify({'message': 'User registered successfully'}), 201)
+
+
+@app.route("/login", methods=["POST"])
+def login():
+    data = request.json  # Assumes you are sending JSON data in the request body
+
+    username = data.get('username')
+    password = data.get('password')
+
+    if not username or not password:
+        return jsonify({'error': 'Username and password are required'}), 400
+
+    # Find the user by username in the database
+    user = User.query.filter_by(username=username).first()
+
+    if not user:
+        return jsonify({'error': 'Invalid username or password'}), 401
+
+    # Check if the provided password matches the stored password hash
+    if not check_password_hash(user.password, password):
+        return jsonify({'error': 'Invalid username or password'}), 401
+
+    return jsonify({'message': 'Login successful', 'user_id': user.id}), 200
+    # Generate a JWT token for the user
+    access_token = create_access_token(identity=user.username)
+
+    # Return the token as part of the response
+    print(access_token)
+    return jsonify({'message': 'Login successful', 'access_token': access_token}), 200
 #main api endpoint
 @app.route('/', methods=['GET'])
 def get_data():
@@ -30,7 +99,17 @@ def user_list():
 # Admin route for creating a category
 @app.route('/admin/create-category', methods=['POST'])
 #add decorator
+# @jwt_required
+
+
 def create_category():
+     # Get the current user's identity from the JWT token
+    current_user = get_jwt_identity()
+
+    # Check if the current user is an admin
+    user = User.query.filter_by(username=current_user).first()
+    if user is None or user.role != 'admin':
+        return jsonify({'error': 'Only admin users can create categories'}), 403
     data = request.get_json()
     name = data.get('name')
     description = data.get('description')
@@ -151,17 +230,88 @@ def update_content(id):
 
     return jsonify({'message': 'Content updated successfully', 'content': updated_content})
 
-#End point to delete content by ids 
-@app.route('/content/<int:id>', methods=['DELETE'])
-def delete_content(id):
+# #End point to delete content by ids 
+# @app.route('/content/<int:id>', methods=['DELETE'])
+# def delete_content(id):
+#     content = Content.query.get(id)
+#     if content is None:
+#         return jsonify({'message': 'Content not found'}), 404
+
+#     db.session.delete(content)
+#     db.session.commit()
+
+#     return jsonify({'message': 'Content deleted successfully'})
+
+#End point to list flagged content
+@app.route('/content/flagged', methods=['GET'])
+# @jwt_required
+def list_flagged_content():
+    # List flagged content
+    flagged_content = Content.query.filter_by(status='flagged').all()
+    content_data = []
+
+    for content in flagged_content:
+        content_data.append({
+            "content_id": content.content_id,
+            "title": content.title,
+            "description": content.description,
+            "category_id": content.category_id,
+            "user_id": content.user_id,
+            "content_type": content.content_type,
+            "rating": content.rating,
+            "is_flagged": content.is_flagged,
+            "image_thumbnail": content.image_thumbnail,
+            "video_url": content.video_url,
+            "status": content.status
+        })
+
+    return jsonify(content_data), 200
+
+#End point to approve flagged content
+
+@app.route('/content/approve/<int:id>', methods=['POST'])
+# @jwt_required
+def approve_content(id):
+    # Get the current user's identity from the JWT token
+    current_user = get_jwt_identity()
+
+    # Check if the current user is an admin
+    user = User.query.filter_by(username=current_user).first()
+    if user is None or user.role != 'admin':
+        return jsonify({'error': 'Only admin users can approve content'}), 403
+
     content = Content.query.get(id)
     if content is None:
         return jsonify({'message': 'Content not found'}), 404
 
-    db.session.delete(content)
+    # Update the content's "status" attribute to "approved"
+    content.status = 'approved'
     db.session.commit()
 
-    return jsonify({'message': 'Content deleted successfully'})
+    return jsonify({'message': 'Content approved successfully'}), 200
+
+#Endpoint to delete flagged content
+
+@app.route('/content/delete/<int:id>', methods=['POST'])
+# @jwt_required
+def delete_content(id):
+    # Get the current user's identity from the JWT token
+    current_user = get_jwt_identity()
+
+    # Check if the current user is an admin
+    user = User.query.filter_by(username=current_user).first()
+    if user is None or user.role != 'admin':
+        return jsonify({'error': 'Only admin users can delete content'}), 403
+
+    content = Content.query.get(id)
+    if content is None:
+        return jsonify({'message': 'Content not found'}), 404
+
+    # Update the content's "status" attribute to "deleted"
+    content.status = 'deleted'
+    db.session.commit()
+
+    return jsonify({'message': 'Content deleted successfully'}), 200
 
 
 #Endpoint to add comment for specific content item
@@ -220,26 +370,37 @@ def delete_comment(id):
 
 
 
-
-# Route for adding an article to the wishlist
+#Endpoint to add and delete conten from wishlist
 @app.route('/add-to-wishlist/<int:content_id>', methods=['POST'])
 def add_to_wishlist(content_id):
     user_id = request.json['user_id']  # Get the user ID from the JSON request
     user = User.query.get(user_id)  # Get the current user
-    article = Content.query.get(content_id)  # Get the article by content ID
-    user.wishlists.append(article)
+    content = Content.query.get(content_id)  # Get the content by content ID
+    
+    # Create a Wishlist object and associate it with the user and content
+    wishlist_item = Wishlist(user_id=user_id, content_id=content_id)
+    db.session.add(wishlist_item)
     db.session.commit()
-    return "Article added to wishlist"
+    return "Content added to wishlist"
+@app.route('/remove-from-wishlist', methods=['DELETE'])
+def remove_from_wishlist():
+    user_id = request.json['user_id']
+    content_id = request.json['content_id']
+    user = User.query.get(user_id)
+    content = Content.query.get(content_id)
+    user.wishlists.remove(content)
+    db.session.commit()
+    return "Content removed from wishlist"
 
-# Route for removing an article from the wishlist
-@app.route('/remove-from-wishlist/<int:content_id>', methods=['POST'])
-def remove_from_wishlist(content_id):
-    user_id = request.json['user_id']  # Get the user ID from the JSON request
-    user = User.query.get(user_id)  # Get the current user
-    article = Content.query.get(content_id)  # Get the article by content ID
-    user.wishlists.remove(article)
+@app.route('/subscribe-to-category', methods=['POST'])
+def subscribe_to_category():
+    user_id = request.json['user_id']
+    category_id = request.json['category_id']
+    user = User.query.get(user_id)
+    category = Category.query.get(category_id)
+    user.subscriptions.append(category)
     db.session.commit()
-    return "Article removed from wishlist"
+    return "Subscribed to category"
 
 with app.app_context():
         db.create_all()
