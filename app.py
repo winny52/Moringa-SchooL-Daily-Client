@@ -1,39 +1,30 @@
-# Import necessary libraries and modules
-from flask import Flask, render_template
-from flask.sessions import Session
-from flask import request, jsonify
-from flask_restful import Resource
-from models import User
-from werkzeug.security import check_password_hash,generate_password_hash
+from flask import Flask, render_template, request, jsonify, session, make_response
+from flask_session import Session
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
+from flask_restful import Resource, Api
+from werkzeug.security import check_password_hash, generate_password_hash
 from flask_jwt_extended import JWTManager
 
+from models import User, db
 
-# Create a Flask application
 app = Flask(__name__)
-
-
-# Initialize Flask-RESTful
 api = Api(app)
 
-
 # Configure Flask-Session
-app.config['SESSION_TYPE'] = 'filesystem'  # You can choose other options
+app.config['SESSION_TYPE'] = 'filesystem'  
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
+app.config['JWT_SECRET_KEY'] = 'moringaschool'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moringa.sqlite3'  
 
-# Initialize Flask-Session
+migrate = Migrate(app, db)
+
 Session(app)
-
-# Configure Flask-JWT-Extended
-app.config['JWT_SECRET_KEY'] = 'your_secret_key'
 jwt = JWTManager(app) 
 
-# Initialize SQLAlchemy (assuming you are using SQLAlchemy for the database)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'your_database_uri'  # Replace with your actual database URI
-db = SQLAlchemy(app)
 db.init_app(app)
 
-# Define routes and views
 class Signup(Resource):
     def post(self):
         data = request.json  # Assumes you are sending JSON data in the request body
@@ -53,11 +44,12 @@ class Signup(Resource):
         hashed_password = generate_password_hash(password)
 
         # Store the hashed password in the database
-        user = User(username=username, password_hash=hashed_password, role=role)
+        user = User(username=username, password=hashed_password, role=role)
+
         db.session.add(user)
         db.session.commit()
 
-        return jsonify({'message': 'User registered successfully'}), 201
+        return make_response(jsonify({'message': 'User registered successfully'}), 201)
 
 
 class Login(Resource):
@@ -87,11 +79,8 @@ class Login(Resource):
         # Return the token as part of the response
         return jsonify({'message': 'Login successful', 'access_token': access_token}), 200
 
-# Add routes 
 api.add_resource(Signup, '/signup')
 api.add_resource(Login, '/login')
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)
