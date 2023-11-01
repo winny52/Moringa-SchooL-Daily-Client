@@ -3,9 +3,9 @@ from flask_session import Session
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
 
-from models import User, db
+from models import User, Category, db
 
 app = Flask(__name__)
 
@@ -13,7 +13,7 @@ app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 app.config['JWT_SECRET_KEY'] = 'moringaschool'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moringa.sqlite3'  
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moringa2.sqlite3'  
 
 migrate = Migrate(app, db, render_as_batch=True)
 
@@ -22,14 +22,26 @@ jwt = JWTManager(app)
 
 db.init_app(app)
 
+#deletes useless rows in db by changing the id of the thing I want to delete.
 def clean():
    user = db.session.execute(db.select(User).filter_by(id=3)).scalar_one()
    db.session.delete(user)
    db.session.commit()
 
 @app.route('/', methods=['GET'])
-def index():
-    return 'cleaned'
+def get_data():
+    data = {
+        'message': 'Welcome to Moringa Daily',
+        
+    }
+
+    return jsonify(data)
+
+@app.route('/view-categories', methods=['GET'])
+def view_categories():
+    categories = Category.query.all()
+    category_list = [{"category_id": category.category_id, "name": category.name, "description": category.description} for category in categories]
+    return jsonify(category_list)
 
 @app.route("/signup", methods=["POST"])
 def signup():
@@ -78,13 +90,18 @@ def login():
     if not check_password_hash(user.password, password):
         return jsonify({'error': 'Invalid username or password'}), 401
 
-    return jsonify({'message': 'Login successful', 'user_id': user.id}), 200
     # Generate a JWT token for the user
     access_token = create_access_token(identity=user.username)
 
     # Return the token as part of the response
-    print(access_token)
-    return jsonify({'message': 'Login successful', 'access_token': access_token}), 200
+    return jsonify(access_token=access_token), 200
+
+@app.route("/protected", methods=["GET"])
+@jwt_required()
+def protected():
+    current_user = get_jwt_identity()
+    print('current_user')
+    return jsonify(logged_in_as=current_user), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
