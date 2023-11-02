@@ -8,6 +8,21 @@ Their are two main files that is app.py and models.app.
 
 It configures the session, jwt, sqlalchemy, migrate
 
+### Front-End
+
+Routes:
+
+Name: http://127.0.0.1:5000/signup \
+method: POST \
+requirements: \
+username, email, role
+
+Name: http://127.0.0.1:5000/login \
+method: POST \
+requirements: \
+username,
+password
+
 ### Routes
 
 In the routes you have index so it doesn't throw a error when
