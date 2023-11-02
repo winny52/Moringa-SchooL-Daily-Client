@@ -4,6 +4,21 @@ from models import Category,Comment,Content,User,db
 from flask_migrate import Migrate
 
 
+#cloudinary dependancies 
+import cloudinary
+from cloudinary.uploader import upload
+from cloudinary.utils import cloudinary_url
+
+
+#cloudinary condiguration
+
+cloudinary.config(
+    cloud_name='dkwurmldt',
+    api_key='562898424693328',
+    api_secret='HDN0hSNFihU9DsT5yGitRxxf7UU'
+)
+
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moringa.db'  
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
@@ -11,6 +26,17 @@ migrate = Migrate(app, db)
 
 
 db.init_app(app) 
+
+
+#cloudinary upload route 
+
+@app.route('/upload', methods=['POST'])
+def upload_media():
+    file = request.files['file']
+    upload_result = upload(file)
+    url, options = cloudinary_url(upload_result['public_id'], format=upload_result['format'])
+    return jsonify({'url': url})
+
 
 #main api endpoint
 @app.route('/', methods=['GET'])
@@ -41,11 +67,41 @@ def create_category():
     return jsonify({"message": "Category created successfully"})
 
 # Route for viewing categories (accessible to techwriters and users)
+# Route for viewing categories (accessible to techwriters and users)
 @app.route('/view-categories', methods=['GET'])
 def view_categories():
     categories = Category.query.all()
     category_list = [{"category_id": category.category_id, "name": category.name, "description": category.description} for category in categories]
     return jsonify(category_list)
+#the modified version 
+
+#############################################################
+
+# @app.route('/view-categories', methods=['GET'])
+# def view_categories():
+#     categories = Category.query.all()
+#     category_list = []
+#     for category in categories:
+#         category_list.append({
+#             'category_id': category.category_id,
+#             'name': category.name,
+#             'description': category.description,
+#             'contents': [{
+#                 'content_id': content.content_id,
+#                 'title': content.title,
+#                 'description': content.description,
+#                 'category_id': content.category_id,
+#                 'user_id': content.user_id,
+#                 'content_type': content.content_type,
+#                 'rating': content.rating,
+#                 'image_thumbnail': cloudinary_url(content.image_thumbnail)[0],
+#                 'video_url': cloudinary_url(content.video_url)[0],
+#                 'status': content.status
+#             } for content in category.contents]
+#         })
+#     return jsonify(category_list)
+
+#########################################################
 
 # Endpoint to add content and retrieve content
 @app.route('/api/content', methods=['GET', 'POST'])

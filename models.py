@@ -3,6 +3,7 @@ from datetime import datetime  # Import the datetime module
 from sqlalchemy_serializer import SerializerMixin
 db = SQLAlchemy()
 
+
 # Define the User model
 class User(db.Model, SerializerMixin):
 
