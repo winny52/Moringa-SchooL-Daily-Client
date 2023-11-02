@@ -189,30 +189,66 @@ def create_rating():
     # Return a success message
     return jsonify({'message': 'Rating created successfully'}), 201
 
-# Route to view a content's average rating by its content_id
+
+
+# Route to get a content's average rating by its content_id
 @app.route('/content/<int:content_id>/average-rating', methods=['GET'])
-def view_content_average_rating(content_id):
+def get_content_average_rating(content_id):
     # Query the database to get the content with the specified content_id
     content = Content.query.get(content_id)
 
     if content is not None:
-        # Calculate the average rating
-        average_rating = content.calculate_average_rating()
+        # Query the related Rating objects for the content
+        ratings = Rating.query.filter_by(content_id=content_id).all()
 
-        # Serialize the average rating
-        serialized_average_rating = {
-            'content_id': content.content_id,
-            'average_rating': average_rating
-        }
+        if ratings:
+            # Calculate the average rating
+            total_ratings = sum(rating.rating for rating in ratings)
+            average_rating = total_ratings / len(ratings)
 
-        return jsonify(serialized_average_rating), 200
+            # Format the average rating to one decimal place
+            formatted_average_rating = round(average_rating, 1)
+
+            # Serialize the formatted average rating
+            serialized_average_rating = {
+                'content_id': content.content_id,
+                'average_rating': formatted_average_rating
+            }
+
+            return jsonify(serialized_average_rating), 200
+        else:
+            return jsonify({'message': 'No ratings found for this content'}), 200
+
     else:
         return jsonify({'message': 'Content not found'}), 404
+    
 
+    # Route to create a comment for a content
+@app.route('/comments', methods=['POST'])
+def create_comment():
+    # Parse the user's comment data from the request
+    data = request.get_json()
+    content_id = data.get('content_id')
+    user_id = data.get('user_id')
+    text = data.get('text')
 
+    # Create a new Comment instance
+    comment = Comment(
+        content_id=content_id,
+        user_id=user_id,
+        text=text
+    )
+
+    # Add the comment to the database
+    db.session.add(comment)
+    db.session.commit()
+
+    # Return a success message
+    return jsonify({'message': 'Comment created successfully'}), 201
 
 if __name__ == '__main__':
     app.run()
+
 
 
 
