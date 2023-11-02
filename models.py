@@ -1,11 +1,9 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime  # Import the datetime module
-from sqlalchemy_serializer import SerializerMixin
 db = SQLAlchemy()
 
 
 # Define the User model
-class User(db.Model, SerializerMixin):
+class User(db.Model):
 
     serialize_only = ("id", "username", "email", "password", "role")
 
@@ -23,44 +21,50 @@ class User(db.Model, SerializerMixin):
         self.role = role
 
 # Define the Category model
-class Category(db.Model, SerializerMixin):
+class Category(db.Model):
     category_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255))
     description = db.Column(db.String(255))
 
 # Define the Content model
-class Content(db.Model, SerializerMixin):
+class Content(db.Model):
     content_id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255))
     description = db.Column(db.Text)
     category_id = db.Column(db.Integer, db.ForeignKey('category.category_id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    content_type = db.Column(db.String(50))
-    rating = db.Column(db.String)
-    time_posted = db.Column(db.DateTime, default=datetime.utcnow)  # Set the default to the current time
-    is_flagged = db.Column(db.String)
-    image_thumbnail = db.Column(db.String(255))
-    video_url = db.Column(db.String(255))
-    status = db.Column(db.String)
+    is_flagged = db.Column(db.Integer)
+    media_url = db.Column(db.String(255)) 
 
+    average_rating = db.Column(db.Float)
 
-    # Define relationships between Content, Category, and User models
+# Define relationships between Content, Category, and User models
     category = db.relationship('Category', backref='contents')
-    user = db.relationship('User', backref='contents')
+    ratings = db.relationship('Rating', backref='rated_content')
+
+
+def calculate_average_rating(self):
+        total_ratings = sum(rating.rating for rating in self.ratings)
+        num_ratings = len(self.ratings)
+        if num_ratings > 0:
+            self.average_rating = total_ratings / num_ratings
+        else:
+            self.average_rating = 0.0
 
 # Define the Comment model
-class Comment(db.Model, SerializerMixin):
+class Comment(db.Model):
     comment_id = db.Column(db.Integer, primary_key=True)
     content_id = db.Column(db.Integer, db.ForeignKey('content.content_id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     text = db.Column(db.Text)
-
+    
     # Define relationships between Comment, Content, and User models
-    content = db.relationship('Content', backref='comments')
-    user = db.relationship('User', backref='comments')
+    content = db.relationship('Content', backref='comments', foreign_keys=[content_id])  # Define the foreign_keys parameter to specify the relationship.
+    user = db.relationship('User', backref='user_comments', foreign_keys=[user_id])  # Define the foreign_keys parameter to specify the relationship.
+
 
 # Define the Subscription model
-class Subscription(db.Model, SerializerMixin):
+class Subscription(db.Model):
     subscription_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     category_id = db.Column(db.Integer, db.ForeignKey('category.category_id'))
@@ -70,7 +74,7 @@ class Subscription(db.Model, SerializerMixin):
     category = db.relationship('Category', backref='subscribers')
 
 # Define the Wishlist model
-class Wishlist(db.Model, SerializerMixin):
+class Wishlist(db.Model):
     wishlist_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     content_id = db.Column(db.Integer, db.ForeignKey('content.content_id'))
@@ -78,3 +82,15 @@ class Wishlist(db.Model, SerializerMixin):
     # Define relationships between Wishlist, User, and Content models
     user = db.relationship('User', backref='wishlists')
     content = db.relationship('Content', backref='wished_by')
+
+#Ratings model
+class Rating(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content_id = db.Column(db.Integer, db.ForeignKey('content.content_id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    rating = db.Column(db.Integer)
+
+    # Define relationships between Rating, Content, and User models
+    content = db.relationship('Content', backref='content_ratings')
+    user = db.relationship('User', backref='ratings')
+
