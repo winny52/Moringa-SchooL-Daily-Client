@@ -182,5 +182,90 @@ class TestApp(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertEqual(data['message'], 'Comment deleted successfully')
 
+    def test_add_to_wishlist_route(self):
+        with app.app_context():
+            # Create a test user
+            user = User(username='test_user', email='test@example.com', role='user', password='password')
+            db.session.add(user)
+
+            # Create a test content
+            content = Content(
+                title='Test Content',
+                description='Test Description',
+                category_id=1,
+                user_id=1,
+                content_type='article',
+                rating=5,
+                is_flagged=False,
+                image_thumbnail='thumbnail.jpg',
+                video_url='video.mp4',
+                status='published'
+            )
+            db.session.add(content)
+
+            db.session.commit()
+
+            # data = {
+            #     'user_id': user.id,
+            #     'content_id': content.id
+            # }
+            # response = self.app.post('/wishlist', json=data)
+            # data = json.loads(response.data)
+            # self.assertEqual(response.status_code, 200)
+            # self.assertEqual(data['message'], 'Content added to wishlist successfully')
+           
+
+    def test_remove_from_wishlist_route(self):
+        with app.app_context():
+            # Create a test user
+            user = User(username='test_user', email='test@example.com', role='user', password='password')
+            db.session.add(user)
+    
+    def test_user_registration_route(self):
+        with app.app_context():
+            data = {
+                'username': 'new_user',
+                'email': 'new@example.com',
+                'password': 'new_password'
+            }
+            
+
+    def test_user_login_route(self):
+        with app.app_context():
+            # Create a test user
+            user = User(username='test_user', email='test@example.com', role='user', password='password')
+            db.session.add(user)
+            db.session.commit()
+
+            data = {
+                'email': 'test@example.com',
+                'password': 'password'
+            }
+            
+
+    def test_user_specific_functionality_route(self):
+        with app.app_context():
+            # Create a test user
+            user = User(username='test_user', email='test@example.com', role='user', password='password')
+            db.session.add(user)
+            db.session.commit()
+
+            # Simulate user-specific functionality
+            data = {
+                'user_id': user.id,
+                'param1': 'value1',
+                'param2': 'value2'
+            }
+            
+
+    def test_error_handling_route(self):
+        with app.app_context():
+            # Simulate an error scenario
+            data = {
+                'invalid_field': 'value'
+            }
+            
+
+
 if __name__ == '__main__':
     unittest.main()
