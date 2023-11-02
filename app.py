@@ -246,6 +246,55 @@ def create_comment():
     # Return a success message
     return jsonify({'message': 'Comment created successfully'}), 201
 
+
+# Route to get comments for a specific content by its content_id
+@app.route('/comments/<int:content_id>', methods=['GET'])
+def get_comments(content_id):
+    # Query the database to retrieve comments for the specified content
+    comments = Comment.query.filter_by(content_id=content_id).all()
+
+    # Serialize the comments
+    serialized_comments = []
+    for comment in comments:
+        serialized_comment = {
+            'comment_id': comment.comment_id,
+            'user_id': comment.user_id,
+            'text': comment.text
+        }
+        serialized_comments.append(serialized_comment)
+
+    return jsonify(serialized_comments), 200
+
+
+# Route to update a comment by its comment_id
+@app.route('/comments/<int:comment_id>', methods=['PUT'])
+def update_comment(comment_id):
+    # Parse the updated comment data from the request
+    data = request.get_json()
+    new_text = data.get('text')
+
+    # Query the database to retrieve the comment with the specified comment_id
+    comment = Comment.query.get(comment_id)
+
+    if comment is not None:
+        # Update the comment's text with the new text
+        comment.text = new_text
+
+        # Commit the changes to the database
+        db.session.commit()
+
+        # Return a success message
+        return jsonify({'message': 'Comment updated successfully'}), 200
+    else:
+        return jsonify({'message': 'Comment not found'}), 404
+    
+    
+
+
+
+
+
+
 if __name__ == '__main__':
     app.run()
 
