@@ -15,6 +15,7 @@ class User(db.Model, SerializerMixin):
     role = db.Column(db.String(50))  # User's role (Admin, Reader, Writer)
 
     wishlists = db.relationship('Wishlist', back_populates='user')
+
     # Constructor for User model
     def __init__(self, username, email, password, role):
         self.username = username

@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
 
-from models import User, Category, db, Content, Comment
+from models import User, Category, db, Content, Comment, Wishlist
 
 app = Flask(__name__)
 
@@ -348,6 +348,18 @@ def delete_comment(id):
     db.session.commit()
 
     return jsonify({'message': 'Comment deleted successfully'})
+
+@app.route('/add-to-wishlist/<int:content_id>', methods=['POST'])
+def add_to_wishlist(content_id):
+    user_id = request.json['user_id']  # Get the user ID from the JSON request
+    user = User.query.get(user_id)  # Get the current user
+    content = Content.query.get(content_id)  # Get the content by content ID
+    
+    # Create a Wishlist object and associate it with the user and content
+    wishlist_item = Wishlist(user_id=user_id, content_id=content_id)
+    db.session.add(wishlist_item)
+    db.session.commit()
+    return "Content added to wishlist"
 
 if __name__ == '__main__':
     app.run(debug=True)
