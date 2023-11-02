@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
 
-from models import User, Category, db, Content
+from models import User, Category, db, Content, Comment
 
 app = Flask(__name__)
 
@@ -295,6 +295,48 @@ def delete_content(id):
     db.session.commit()
 
     return jsonify({'message': 'Content deleted successfully'}), 200
+
+@app.route('/content/<int:content_id>/comments', methods=['GET', 'POST'])
+@jwt_required()
+def get_or_create_comments(content_id):
+    if request.method == 'GET':
+        
+        content = Content.query.get(content_id)
+        if content is None:
+            return jsonify({'message': 'Content not found'}), 404
+
+        comments = Comment.query.filter_by(content_id=content_id).all()
+        comment_list = []
+
+        for comment in comments:
+            comment_list.append({
+                'comment_id': comment.comment_id,
+                'text': comment.text,
+                'user_id': comment.user_id,  
+                
+            })
+
+        return jsonify(comment_list)
+    
+    elif request.method == 'POST':
+        
+        content = Content.query.get(content_id)
+        if content is None:
+            return jsonify({'message': 'Content not found'}), 404
+
+        data = request.get_json()
+
+        new_comment = Comment(
+            content_id=content_id,
+            user_id=data['user_id'],  
+            text=data['text']
+            
+        )
+
+        db.session.add(new_comment)
+        db.session.commit()
+
+        return jsonify({'message': 'Comment added successfully'})
 
 if __name__ == '__main__':
     app.run(debug=True)
