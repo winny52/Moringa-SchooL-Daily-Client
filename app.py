@@ -37,12 +37,6 @@ def get_data():
 
     return jsonify(data)
 
-@app.route('/users', methods=['GET'])
-def user_list():
-    users = [user.to_dict() for user in User.query.all()]
-    print(users)
-    return make_response(jsonify(users), 200)
-
 
 
 @app.route('/view-categories', methods=['GET'])
@@ -102,14 +96,34 @@ def login():
     access_token = create_access_token(identity=user.username)
 
     # Return the token as part of the response
+
     return jsonify(access_token=access_token), 200
 
-@app.route("/protected", methods=["GET"])
+@app.route('/users', methods=['GET'])
+def user_list():
+    users = [user.to_dict() for user in User.query.all()]
+    print(users)
+    return make_response(jsonify(users), 200)
+
+@app.route('/admin/create-category', methods=['POST'])
 @jwt_required()
-def protected():
+def create_category():
+     # Get the current user's identity from the JWT token
     current_user = get_jwt_identity()
-    print('current_user')
-    return jsonify(logged_in_as=current_user), 200
+
+    # Check if the current user is an admin
+    user = User.query.filter_by(username=current_user).first()
+
+    if user is None or user.role != 'admin':
+        return jsonify({'error': 'Only admin users can create categories'}), 403
+
+    data = request.get_json()
+    name = data.get('name')
+    description = data.get('description')
+    category = Category(name=name, description=description)
+    db.session.add(category)
+    db.session.commit()
+    return jsonify({"message": "Category created successfully"})
 
 if __name__ == '__main__':
     app.run(debug=True)
