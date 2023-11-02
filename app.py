@@ -254,5 +254,26 @@ def list_flagged_content():
 
     return jsonify(content_data), 200
 
+@app.route('/content/approve/<int:id>', methods=['POST'])
+@jwt_required()
+def approve_content(id):
+    current_user = get_jwt_identity()
+    # Check if the current user is an admin
+    user = User.query.filter_by(username=current_user).first()
+
+    if user is None or user.role != 'admin':
+        return jsonify({'error': 'Only admin users can approve content'}), 403
+
+    content = Content.query.get(id)
+
+    if content is None:
+        return jsonify({'message': 'Content not found'}), 404
+
+    # Update the content's "status" attribute to "approved"
+    content.status = 'approved'
+    db.session.commit()
+
+    return jsonify({'message': 'Content approved successfully'}), 200
+
 if __name__ == '__main__':
     app.run(debug=True)
