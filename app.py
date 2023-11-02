@@ -193,5 +193,66 @@ def create_category():
 
     return jsonify({"message": "Category created successfully"})
 
+@app.route('/content/<int:id>', methods=['PUT'])
+def update_content(id):
+    content = Content.query.get(id)
+
+    if content is None:
+        return jsonify({'message': 'Content not found'}), 404
+
+    data = request.get_json()
+
+    content.title = data.get('title', content.title)
+    content.description = data.get('description', content.description)
+    content.content_type = data.get('content_type', content.content_type)
+    content.rating = data.get('rating', content.rating)
+    content.is_flagged = data.get('is_flagged', content.is_flagged)
+    content.image_thumbnail = data.get('image_thumbnail', content.image_thumbnail)
+    content.video_url = data.get('video_url', content.video_url)
+    content.status = data.get('status', content.status)
+
+
+    updated_content = {
+        "content_id": content.content_id,
+        "title": content.title,
+        "description": content.description,
+        "category_id": content.category_id,
+        "user_id": content.user_id,
+        "content_type": content.content_type,
+        "rating": content.rating,
+        "is_flagged": content.is_flagged,
+        "image_thumbnail": content.image_thumbnail,
+        "video_url": content.video_url,
+        "status": content.status
+    }
+
+    db.session.commit()
+
+    return jsonify({'message': 'Content updated successfully', 'content': updated_content})
+
+@app.route('/content/flagged', methods=['GET'])
+@jwt_required()
+def list_flagged_content():
+    # List flagged content
+    flagged_content = Content.query.filter_by(status='flagged').all()
+    content_data = []
+
+    for content in flagged_content:
+        content_data.append({
+            "content_id": content.content_id,
+            "title": content.title,
+            "description": content.description,
+            "category_id": content.category_id,
+            "user_id": content.user_id,
+            "content_type": content.content_type,
+            "rating": content.rating,
+            "is_flagged": content.is_flagged,
+            "image_thumbnail": content.image_thumbnail,
+            "video_url": content.video_url,
+            "status": content.status
+        })
+
+    return jsonify(content_data), 200
+
 if __name__ == '__main__':
     app.run(debug=True)
