@@ -37,6 +37,14 @@ def get_data():
 
     return jsonify(data)
 
+@app.route('/users', methods=['GET'])
+def user_list():
+    users = [user.to_dict() for user in User.query.all()]
+    print(users)
+    return make_response(jsonify(users), 200)
+
+
+
 @app.route('/view-categories', methods=['GET'])
 def view_categories():
     categories = Category.query.all()
