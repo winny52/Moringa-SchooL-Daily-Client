@@ -275,5 +275,26 @@ def approve_content(id):
 
     return jsonify({'message': 'Content approved successfully'}), 200
 
+@app.route('/content/delete/<int:id>', methods=['POST'])
+@jwt_required()
+def delete_content(id):
+    # Get the current user's identity from the JWT token
+    current_user = get_jwt_identity()
+
+    # Check if the current user is an admin
+    user = User.query.filter_by(username=current_user).first()
+    if user is None or user.role != 'admin':
+        return jsonify({'error': 'Only admin users can delete content'}), 403
+
+    content = Content.query.get(id)
+    if content is None:
+        return jsonify({'message': 'Content not found'}), 404
+
+    # Update the content's "status" attribute to "deleted"
+    content.status = 'deleted'
+    db.session.commit()
+
+    return jsonify({'message': 'Content deleted successfully'}), 200
+
 if __name__ == '__main__':
     app.run(debug=True)
