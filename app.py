@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity, create_access_token
 
-from models import User, Category, db
+from models import User, Category, db, Content
 
 app = Flask(__name__)
 
@@ -50,6 +50,7 @@ def signup():
     data = request.json  # Assumes you are sending JSON data in the request body
 
     username = data.get('username')
+    email = data.get('email')
     password = data.get('password')
     role = data.get('role')
 
@@ -64,7 +65,7 @@ def signup():
     hashed_password = generate_password_hash(password)
 
     # Store the hashed password in the database
-    user = User(username=username, password=hashed_password, role=role)
+    user = User(username=username,email=email, password=hashed_password, role=role)
 
     db.session.add(user)
     db.session.commit()
@@ -105,13 +106,79 @@ def user_list():
     print(users)
     return make_response(jsonify(users), 200)
 
+@app.route('/api/content', methods=['GET', 'POST'])
+def content():
+    if request.method == 'POST':
+        title = request.json['title']
+        description = request.json['description']
+        category_id = request.json['category_id']
+        user_id = request.json['user_id']
+        content_type = request.json['content_type']
+        rating = request.json['rating']
+        is_flagged = request.json['is_flagged']
+        image_thumbnail = request.json['image_thumbnail']
+        video_url = request.json['video_url']
+        status = request.json['status']
+
+    
+        new_content = Content(
+            title=title,
+            description=description,
+            category_id=category_id,
+            user_id=user_id,
+            content_type=content_type,
+            rating=rating,
+            is_flagged=is_flagged,
+            image_thumbnail=image_thumbnail,
+            video_url=video_url,
+            status=status
+        )
+
+        db.session.add(new_content)
+        db.session.commit()
+
+        response = {
+            "content_id": new_content.content_id,
+            "title": new_content.title,
+            "description": new_content.description,
+            "category_id": new_content.category_id,
+            "user_id": new_content.user_id,
+            "content_type": new_content.content_type,
+            "rating": new_content.rating,
+            "is_flagged": new_content.is_flagged,
+            "image_thumbnail": new_content.image_thumbnail,
+            "video_url": new_content.video_url,
+            "status": new_content.status
+        }
+
+        return jsonify(response), 201
+
+    elif request.method == 'GET':
+        content_list = Content.query.all()
+        content_data = []
+
+        for content in content_list:
+            content_data.append({
+                "content_id": content.content_id,
+                "title": content.title,
+                "description": content.description,
+                "category_id": content.category_id,
+                "user_id": content.user_id,
+                "content_type": content.content_type,
+                "rating": content.rating,
+                "is_flagged": content.is_flagged,
+                "image_thumbnail": content.image_thumbnail,
+                "video_url": content.video_url,
+                "status": content.status
+            })
+
+        return jsonify(content_data), 200
+
 @app.route('/admin/create-category', methods=['POST'])
 @jwt_required()
 def create_category():
-     # Get the current user's identity from the JWT token
     current_user = get_jwt_identity()
 
-    # Check if the current user is an admin
     user = User.query.filter_by(username=current_user).first()
 
     if user is None or user.role != 'admin':
@@ -123,13 +190,8 @@ def create_category():
     category = Category(name=name, description=description)
     db.session.add(category)
     db.session.commit()
-    return jsonify({"message": "Category created successfully"})
 
-@app.route('/view-categories', methods=['GET'])
-def view_categories():
-    categories = Category.query.all()
-    category_list = [{"category_id": category.category_id, "name": category.name, "description": category.description} for category in categories]
-    return jsonify(category_list)
+    return jsonify({"message": "Category created successfully"})
 
 if __name__ == '__main__':
     app.run(debug=True)
