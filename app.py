@@ -338,5 +338,16 @@ def get_or_create_comments(content_id):
 
         return jsonify({'message': 'Comment added successfully'})
 
+@app.route('/comments/<int:id>', methods=['DELETE'])
+def delete_comment(id):
+    comment = Comment.query.get(id)
+    if comment is None:
+        return jsonify({'message': 'Comment not found'}), 404
+
+    db.session.delete(comment)
+    db.session.commit()
+
+    return jsonify({'message': 'Comment deleted successfully'})
+
 if __name__ == '__main__':
     app.run(debug=True)
