@@ -189,6 +189,26 @@ def create_rating():
     # Return a success message
     return jsonify({'message': 'Rating created successfully'}), 201
 
+# Route to view a content's average rating by its content_id
+@app.route('/content/<int:content_id>/average-rating', methods=['GET'])
+def view_content_average_rating(content_id):
+    # Query the database to get the content with the specified content_id
+    content = Content.query.get(content_id)
+
+    if content is not None:
+        # Calculate the average rating
+        average_rating = content.calculate_average_rating()
+
+        # Serialize the average rating
+        serialized_average_rating = {
+            'content_id': content.content_id,
+            'average_rating': average_rating
+        }
+
+        return jsonify(serialized_average_rating), 200
+    else:
+        return jsonify({'message': 'Content not found'}), 404
+
 
 
 if __name__ == '__main__':
