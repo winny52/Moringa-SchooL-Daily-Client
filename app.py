@@ -288,6 +288,22 @@ def update_comment(comment_id):
     else:
         return jsonify({'message': 'Comment not found'}), 404
     
+
+    # Route to delete a comment by its comment_id
+@app.route('/comments/<int:comment_id>', methods=['DELETE'])
+def delete_comment(comment_id):
+    # Query the database to retrieve the comment with the specified comment_id
+    comment = Comment.query.get(comment_id)
+
+    if comment is not None:
+        # Delete the comment from the database
+        db.session.delete(comment)
+        db.session.commit()
+
+        # Return a success message
+        return jsonify({'message': 'Comment deleted successfully'}), 200
+    else:
+        return jsonify({'message': 'Comment not found'}), 404
     
 
 
