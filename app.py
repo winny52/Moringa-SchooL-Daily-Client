@@ -125,5 +125,11 @@ def create_category():
     db.session.commit()
     return jsonify({"message": "Category created successfully"})
 
+@app.route('/view-categories', methods=['GET'])
+def view_categories():
+    categories = Category.query.all()
+    category_list = [{"category_id": category.category_id, "name": category.name, "description": category.description} for category in categories]
+    return jsonify(category_list)
+
 if __name__ == '__main__':
     app.run(debug=True)
