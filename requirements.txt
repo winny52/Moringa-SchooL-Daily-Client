@@ -4,6 +4,8 @@ charset-normalizer
 click
 exceptiongroup
 Flask
+flask_migrate
+flask_sqlalchemy
 gunicorn
 idna
 importlib-metadata
