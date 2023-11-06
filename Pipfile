@@ -10,6 +10,10 @@ gunicorn = "*"
 sqlalchemy = "*"
 flask-sqlalchemy = "*"
 flask-migrate = "*"
+sqlalchemy-serializer = "*"
+flask-jwt-extended = "*"
+flask-session = "*"
+flask-cors = "*"
 
 [dev-packages]
 
