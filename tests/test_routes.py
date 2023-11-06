@@ -220,6 +220,7 @@ class TestApp(unittest.TestCase):
             # Create a test user
             user = User(username='test_user', email='test@example.com', role='user', password='password')
             db.session.add(user)
+
     
     def test_user_registration_route(self):
         with app.app_context():
@@ -264,6 +265,7 @@ class TestApp(unittest.TestCase):
             data = {
                 'invalid_field': 'value'
             }
+            
             
 
 
