@@ -12,6 +12,7 @@ flask-sqlalchemy = "*"
 flask-migrate = "*"
 sqlalchemy-serializer = "*"
 cloudinary = "*"
+flask-cors = "*"
 
 [dev-packages]
 

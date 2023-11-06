@@ -2,16 +2,25 @@ from flask import Flask, request, jsonify,make_response
 from flask_sqlalchemy import SQLAlchemy
 from models import Category,Comment,Content,User, Rating, db
 from flask_migrate import Migrate
+import random
+from flask_cors import CORS
+
 
 
 
 app = Flask(__name__)
+
+CORS(app)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moringa.db'  
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
 migrate = Migrate(app, db)
 
 
+
 db.init_app(app) 
+
+
 
 #main api endpoint
 @app.route('/', methods=['GET'])
@@ -307,6 +316,43 @@ def delete_comment(comment_id):
     
 
 
+
+@app.route('/content/random', methods=['GET'])
+def get_random_content():
+    content_list = Content.query.all()
+    random_content = random.choice(content_list)
+
+    serialized_content = {
+        'content_id': random_content.content_id,
+        'title': random_content.title,
+        'description': random_content.description,
+        'category_id': random_content.category_id,
+        'user_id': random_content.user_id,
+        'media_url': random_content.media_url,
+        'average_rating': random_content.average_rating
+    
+    }
+
+    return jsonify(serialized_content), 200
+
+
+# Define the route for trending video media
+@app.route('/trending-media', methods=['GET'])
+def get_trending_media():
+    # Query the database to get all video content
+    video_content = Content.query.filter_by(category_id=1).all()  # Assuming category_id 1 represents video content
+
+    # Randomly select a video from the list
+    random_video = random.choice(video_content)
+
+    # Serialize the selected video
+    trending_media = {
+        'title': random_video.title,
+        'description': random_video.description,
+        'media_url': random_video.media_url
+    }
+
+    return jsonify(trending_media), 200
 
 
 
