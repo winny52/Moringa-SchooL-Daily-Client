@@ -24,7 +24,7 @@ class User(db.Model):
 class Category(db.Model):
     category_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255))
-    description = db.Column(db.String(255))
+    # description = db.Column(db.String(255))
 
 # Define the Content model
 class Content(db.Model):
@@ -35,7 +35,6 @@ class Content(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     is_flagged = db.Column(db.Integer)
     media_url = db.Column(db.String(255)) 
-
     average_rating = db.Column(db.Float)
 
 # Define relationships between Content, Category, and User models
@@ -91,5 +90,5 @@ class Rating(db.Model):
     rating = db.Column(db.Integer)
 
     # Define relationships between Rating, Content, and User models
-    content = db.relationship('Content', backref='content_ratings')
+    # content = db.relationship('Content', backref='rated_content')
     user = db.relationship('User', backref='ratings')

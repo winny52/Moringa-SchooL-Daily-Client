@@ -1,13 +1,14 @@
 from flask import Flask, request, jsonify,make_response,session,render_template
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
-from models import Category,Comment,Content,User,db,Wishlist
+from models import Category,Comment,Content,User,db,Wishlist,Rating
 from flask_migrate import Migrate
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_jwt_extended import JWTManager,get_jwt_identity
-
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moringa.db'  
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
 migrate = Migrate(app, db)
@@ -101,11 +102,22 @@ def user_list():
 def create_category():
     data = request.get_json()
     name = data.get('name')
-    description = data.get('description')
-    category = Category(name=name, description=description)
+    category = Category(name=name)
     db.session.add(category)
     db.session.commit()
-    return jsonify({"message": "Category created successfully"})
+    # return jsonify({"message": "Category created successfully"})
+    response = {
+        'message': 'Category added successfully',
+        'category_id': category.category_id
+    }
+    return jsonify(response), 201
+
+
+
+
+
+
+
 
 # Route for viewing categories (accessible to techwriters and users)
 @app.route('/view-categories', methods=['GET'])
@@ -310,9 +322,9 @@ def approve_content(id):
 
 #Endpoint to delete flagged content
 
-@app.route('/content/delete/<int:id>', methods=['POST'])
+@app.route('/content/delete-approved/<int:id>', methods=['POST'])
 # @jwt_required
-def delete_content(id):
+def delete_flagged_content(id):
     # Get the current user's identity from the JWT token
     current_user = get_jwt_identity()
 
