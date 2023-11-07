@@ -4,8 +4,17 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-flask-session = "*"
+pytest = "*"
+flask = "*"
+gunicorn = "*"
+sqlalchemy = "*"
+flask-sqlalchemy = "*"
+flask-migrate = "*"
+sqlalchemy-serializer = "*"
 flask-jwt-extended = "*"
+flask-session = "*"
+flask-cors = "*"
+cloudinary = "*"
 
 [dev-packages]
 
