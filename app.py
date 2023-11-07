@@ -81,6 +81,13 @@ def login():
     # Return the token as part of the response
     print(access_token)
     return jsonify({'message': 'Login successful', 'access_token': access_token}), 200
+#main api endpointapp.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moringa.db'  
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
+migrate = Migrate(app, db)
+
+
+db.init_app(app) 
+
 #main api endpoint
 @app.route('/', methods=['GET'])
 def get_data():
