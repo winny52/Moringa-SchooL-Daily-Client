@@ -6,7 +6,7 @@ from flask_migrate import Migrate
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_jwt_extended import JWTManager,get_jwt_identity
 from flask_cors import CORS
-import random# randomizing dependancy
+import random # randomizing dependancy
 
 app = Flask(__name__)
 CORS(app)
