@@ -6,6 +6,7 @@ from flask_migrate import Migrate
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_jwt_extended import JWTManager,get_jwt_identity
 from flask_cors import CORS
+import random
 
 app = Flask(__name__)
 CORS(app)
@@ -86,7 +87,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 migrate = Migrate(app, db)
 
 
-db.init_app(app) 
+# db.init_app(app) 
 
 #main api endpoint
 @app.route('/', methods=['GET'])
@@ -351,6 +352,7 @@ def delete_flagged_content(id):
     return jsonify({'message': 'Content deleted successfully'}), 200
 
 
+
     # Route to create a comment for a content
 @app.route('/comments', methods=['POST'])
 def create_comment():
@@ -454,21 +456,70 @@ def remove_from_wishlist():
     user.wishlists.remove(content)
     db.session.commit()
     return "Content removed from wishlist"
+# @app.route('/content/random', methods=['POST'])
+# def get_random_content():
+#     content_list = Content.query.all()
+#     random_content = random.choice(content_list)
 
-@app.route('/subscribe-to-category', methods=['POST'])
-def subscribe_to_category():
-    user_id = request.json['user_id']
-    category_id = request.json['category_id']
-    user = User.query.get(user_id)
-    category = Category.query.get(category_id)
-    user.subscriptions.append(category)
-    db.session.commit()
-    return "Subscribed to category"
+#     serialized_content = {
+#         'content_id': random_content.content_id,
+#         'title': random_content.title,
+#         'description': random_content.description,
+#         'category_id': random_content.category_id,
+#         'user_id': random_content.user_id,
+#         'media_url': random_content.media_url,
+#         'average_rating': random_content.average_rating
+    
+#     }
+
+@app.route('/content/random', methods=['GET'])
+def get_random_content():
+    content_list = Content.query.all()
+    random_content = random.choice(content_list)
+
+    serialized_content = {
+        'content_id': random_content.content_id,
+        'title': random_content.title,
+        'description': random_content.description,
+        'category_id': random_content.category_id,
+        'user_id': random_content.user_id,
+        'media_url': random_content.media_url,
+        'average_rating': random_content.average_rating
+    
+    }
+
+    return jsonify(serialized_content), 200
+
+# Define the route for trending video media
+@app.route('/trending-media', methods=['GET'])
+def get_trending_media():
+    # Query the database to get all video content
+    video_content = Content.query.filter_by(category_id=2).all()  # Assuming category_id 1 represents video content
+
+    # Randomly select a video from the list
+    random_video = random.choice(video_content)
+
+    # Serialize the selected video
+    trending_media = {
+        'title': random_video.title,
+        'description': random_video.description,
+        'media_url': random_video.media_url
+    }
+
+    return jsonify(trending_media), 200
+# @app.route('/subscribe-to-category', methods=['POST'])
+# def subscribe_to_category():
+#     user_id = request.json['user_id']
+#     category_id = request.json['category_id']
+#     user = User.query.get(user_id)
+#     category = Category.query.get(category_id)
+#     user.subscriptions.append(category)
+#     db.session.commit()
+#     return "Subscribed to category"
 
 with app.app_context():
         db.create_all()
     
 
 if __name__ == '__main__':
-     
      app.run(debug=True)

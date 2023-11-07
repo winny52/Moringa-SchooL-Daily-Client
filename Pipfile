@@ -14,14 +14,10 @@ sqlalchemy-serializer = "*"
 flask-jwt-extended = "*"
 flask-session = "*"
 flask-cors = "*"
-sqlalchemy = "*"
-flask-sqlalchemy = "*"
-flask-migrate = "*"
-sqlalchemy-serializer = "*"
 cloudinary = "*"
 
 [dev-packages]
 
 [requires]
 python_version = "3.8"
-python_full_version = "3.8.10"
+python_full_version = "3.8.13"
