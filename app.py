@@ -6,6 +6,7 @@ from flask_migrate import Migrate
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_jwt_extended import JWTManager,get_jwt_identity
 from flask_cors import CORS
+import random# randomizing dependancy
 
 app = Flask(__name__)
 CORS(app)
@@ -349,6 +350,65 @@ def delete_flagged_content(id):
     db.session.commit()
 
     return jsonify({'message': 'Content deleted successfully'}), 200
+
+#peter's updated routes that didnt merge
+#randomizing
+@app.route('/content/random', methods=['GET'])
+def get_random_content():
+    content_list = Content.query.all()
+    random_content = random.choice(content_list)
+
+    serialized_content = {
+        'content_id': random_content.content_id,
+        'title': random_content.title,
+        'description': random_content.description,
+        'category_id': random_content.category_id,
+        'user_id': random_content.user_id,
+        'media_url': random_content.media_url,
+        'average_rating': random_content.average_rating
+    
+    }
+
+    return jsonify(serialized_content), 200
+
+# Define the route for trending video media
+@app.route('/trending-media', methods=['GET'])
+def get_trending_media():
+    # Query the database to get all video content
+    video_content = Content.query.filter_by(category_id=1).all()  # Assuming category_id 1 represents video content
+
+    # Randomly select a video from the list
+    random_video = random.choice(video_content)
+
+    # Serialize the selected video
+    trending_media = {
+        'title': random_video.title,
+        'description': random_video.description,
+        'media_url': random_video.media_url
+    }
+
+    return jsonify(trending_media), 200
+
+#endpoint for popular content
+@app.route('/highest-rated-content', methods=['GET'])
+def get_highest_rated_content():
+    # Query the database to get the highest-rated content
+    highest_rated_content = Content.query.order_by(Content.average_rating.desc()).first()
+    
+    if highest_rated_content:
+        # Serialize the highest-rated content to a dictionary
+        serialized_content = {
+            'content_id': highest_rated_content.content_id,
+            'title': highest_rated_content.title,
+            'description': highest_rated_content.description,
+            'category_id': highest_rated_content.category_id,
+            'user_id': highest_rated_content.user_id,
+            'media_url': highest_rated_content.media_url,
+            'average_rating': highest_rated_content.average_rating
+        }
+        return jsonify(serialized_content), 200
+    else:
+        return jsonify({'message': 'No highest-rated content found'}), 404
 
 
     # Route to create a comment for a content
