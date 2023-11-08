@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from models import Category,Comment,Content,User,db,Wishlist,Rating
 from flask_migrate import Migrate
 from werkzeug.security import check_password_hash, generate_password_hash
-from flask_jwt_extended import JWTManager,get_jwt_identity
+from flask_jwt_extended import JWTManager,get_jwt_identity,create_access_token
 from flask_cors import CORS
 import random
 
@@ -12,6 +12,7 @@ app = Flask(__name__)
 CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moringa.db'  
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
+app.config['JWT_SECRET_KEY'] = 'moringaschool'
 migrate = Migrate(app, db)
 
 Session(app)
@@ -20,9 +21,13 @@ jwt = JWTManager(app)
 db.init_app(app)
 
 def clean():
-   user = db.session.execute(db.select(User).filter_by(id=3)).scalar_one()
-   db.session.delete(user)
-   db.session.commit()
+        user = db.session.execute(db.select(User).filter_by(id=6)).scalar_one()
+
+    # user1 = User(email="admin@email.com", username="admin", password="admin", role="admin")
+
+    # db.session.add(user1)
+        db.session.delete(user)
+        db.session.commit()
 
 # @app.route('/', methods=['GET'])
 # def index():
@@ -31,7 +36,7 @@ def clean():
 @app.route("/signup", methods=["POST"])
 def signup():
     data = request.json  # Assumes you are sending JSON data in the request body
-
+    email=data.get('email')
     username = data.get('username')
     password = data.get('password')
     role = data.get('role')
@@ -47,7 +52,7 @@ def signup():
     hashed_password = generate_password_hash(password)
 
     # Store the hashed password in the database
-    user = User(username=username, password=hashed_password, role=role)
+    user = User(username=username, email=email,password=hashed_password, role="writer")
 
     db.session.add(user)
     db.session.commit()
@@ -75,9 +80,9 @@ def login():
     if not check_password_hash(user.password, password):
         return jsonify({'error': 'Invalid username or password'}), 401
 
-    return jsonify({'message': 'Login successful', 'user_id': user.id}), 200
     # Generate a JWT token for the user
-    access_token = create_access_token(identity=user.username)
+    user_dict = {"username": user.username, "email": user.email, "id": user.id, "role": user.role}
+    access_token = create_access_token(identity=user_dict)
 
     # Return the token as part of the response
     print(access_token)

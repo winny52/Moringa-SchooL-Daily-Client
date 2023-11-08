@@ -9,9 +9,9 @@ def create_default_data():
         db.create_all()
 
         # Create default users
-        user1 = User(username="admin", email="admin@example.com", password=generate_password_hash("admin_password"), role="admin")
-        user2 = User(username="techwriter", email="techwriter@example.com", password=generate_password_hash("techwriter_password"), role="techwriter")
-        user3 = User(username="user", email="user@example.com", password=generate_password_hash("user_password"), role="user")
+        user1 = User(username="admin", email="admin@example.com", password=generate_password_hash("admin"), role="admin")
+        user2 = User(username="techwriter", email="techwriter@example.com", password=generate_password_hash("techwriter"), role="techwriter")
+        user3 = User(username="user", email="user@example.com", password=generate_password_hash("user"), role="user")
 
         db.session.add_all([user1, user2, user3])
         db.session.commit()
