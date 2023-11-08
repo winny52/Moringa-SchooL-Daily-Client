@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify, session, make_response
+from flask_cors import CORS
 from flask_session import Session
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -16,6 +17,7 @@ app.config['JWT_SECRET_KEY'] = 'moringaschool'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moringa2.sqlite3'  
 
 migrate = Migrate(app, db, render_as_batch=True)
+CORS(app)
 
 Session(app)
 jwt = JWTManager(app) 
@@ -81,7 +83,10 @@ def login():
     password = data.get('password')
 
     if not username or not password:
-        return jsonify({'error': 'Username and password are required'}), 400
+        print(username)
+        print(password)
+        print(data)
+        return jsonify({'error': 'Username and password are required'}), 419
 
     # Find the user by username in the database
     user = User.query.filter_by(username=username).first()
@@ -94,7 +99,8 @@ def login():
         return jsonify({'error': 'Invalid username or password'}), 401
 
     # Generate a JWT token for the user
-    access_token = create_access_token(identity=user.username)
+    user_dict = {"username": user.username, "email": user.email, "id": user.id, "role": user.role}
+    access_token = create_access_token(identity=user_dict)
 
     # Return the token as part of the response
 
