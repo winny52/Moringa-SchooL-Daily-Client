@@ -103,11 +103,16 @@ def get_data():
     }
     return jsonify(data)
 
-# Endpoint to get a list of signed-up users as JSON
+# # Endpoint to get a list of signed-up users as JSON
+# @app.route('/users', methods=['GET'])
+# def user_list():
+#     users = [user.to_dict() for user in User.query.all()]
+#     return make_response(jsonify(users), 200)
 @app.route('/users', methods=['GET'])
 def user_list():
-    users = [user.to_dict() for user in User.query.all()]
-    return make_response(jsonify(users), 200)
+    users = User.query.all()
+    serialized_users = [user.to_dict() for user in users]
+    return jsonify(serialized_users)
 
 # Admin route for creating a category
 @app.route('/admin/create-category', methods=['POST'])
@@ -125,7 +130,15 @@ def create_category():
     }
     return jsonify(response), 201
 
-
+@app.route('/admin/delete-user/<int:user_id>', methods=['POST'])
+def delete_user(user_id):
+    user = User.query.get(user_id)
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({"message": "User deleted successfully"})
+    else:
+        return jsonify({"error": "User not found"}, 404)
 
 
 
@@ -133,10 +146,10 @@ def create_category():
 
 
 # Route for viewing categories (accessible to techwriters and users)
-@app.route('/view-categories', methods=['GET'])
+@app.route('/categories', methods=['GET'])
 def view_categories():
     categories = Category.query.all()
-    category_list = [{"category_id": category.category_id, "name": category.name, "description": category.description} for category in categories]
+    category_list = [{"category_id": category.category_id, "name": category.name } for category in categories]
     return jsonify(category_list)
 #content routes for creating
 @app.route('/content', methods=['POST'])

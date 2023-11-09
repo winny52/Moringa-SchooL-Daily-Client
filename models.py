@@ -9,12 +9,18 @@ class User(db.Model):
      password = db.Column(db.String(255))
      role = db.Column(db.String(50))
 
-     def __init__(self, username, email, password, role):
-        self.username = username
-        self.email = email
-        self.password = password
-        self.role = role
-
+    #  def __init__(self, username, email, password, role):
+    #     self.username = username
+    #     self.email = email
+    #     self.password = password
+    #     self.role = role
+     def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'role': self.role  # Add other fields as needed
+        }
 # Define the Category model
 class Category(db.Model):
     category_id = db.Column(db.Integer, primary_key=True)
