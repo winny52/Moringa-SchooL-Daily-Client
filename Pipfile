@@ -7,6 +7,14 @@ name = "pypi"
 pytest = "*"
 flask = "*"
 gunicorn = "*"
+sqlalchemy = "*"
+flask-sqlalchemy = "*"
+flask-migrate = "*"
+sqlalchemy-serializer = "*"
+flask-jwt-extended = "*"
+flask-session = "*"
+flask-cors = "*"
+cloudinary = "*"
 
 [dev-packages]
 
