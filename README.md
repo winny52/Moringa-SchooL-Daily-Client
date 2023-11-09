@@ -1,1 +1,1 @@
-# Moringa-SchooL-Daily-Client
+# Moringa-SchooL-Daily-Server
