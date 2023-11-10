@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 db = SQLAlchemy()
 
 # Define the User model
@@ -39,6 +40,8 @@ class Content(db.Model):
     is_flagged = db.Column(db.Boolean, default=False)
     media_url = db.Column(db.String(255))
     average_rating = db.Column(db.Float)
+    # created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # created_at = db.Column(datetime)
 
     # Define relationships between Content, User, and Rating models
     user = db.relationship('User', backref='contents', lazy=True)
